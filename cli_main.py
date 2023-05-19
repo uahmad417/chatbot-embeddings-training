@@ -9,9 +9,9 @@ import sys
 
 
 global FILE_NAME
-FILE_NAME = 'tgg.parquet'
+FILE_NAME = 'tracks.parquet'
 EMBEDDINGS_MODEL = "text-embedding-ada-002"
-openai.api_key = "INSERT_API_KEY_HERE"
+openai.api_key = "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"
 
 
 def parse_dataset():
@@ -20,10 +20,10 @@ def parse_dataset():
 
     Returns:
     - An instance of the collections.namedtuple 'Engine', containing the following attributes:
-        * page_text_corpus: a list of strings representing the preprocessed text data.
-        * page_text_corpus_embeddings: a numpy array of shape (n, m) representing the precomputed embeddings for each text data.
-        * page_numbers_list: a list of integers representing the page numbers for each text data.
-        * chapter_number_list: a list of strings representing the chapter numbers for each text data.
+        * lyrics_corpus: a list of strings representing the preprocessed text data.
+        * lyrics_corpus:_embeddings: a numpy array of shape (n, m) representing the precomputed embeddings for each text data.
+        * artist_name_list: a list of strings representing the artist name for each track.
+        * track_name_list: a list of strings representing the track_name for each lyrics text data.
         * top_k: an integer representing the maximum number of similar sections to return for a given query.
 
     Example:
@@ -33,22 +33,25 @@ def parse_dataset():
     print("Loading embedding file...")
     tgg_file = pd.read_parquet(FILE_NAME)
     print("Converting to np array...")
-    page_numbers_list = tgg_file['page_number'].tolist()
-    chapter_number_list = tgg_file['chapter'].tolist()
-    page_text_corpus = tgg_file['page'].tolist()
-    page_text_corpus_embeddings = np.array(tgg_file['embedding'].tolist(), dtype=float)
-    top_k = min(3, len(page_text_corpus))
+    artist_name_list = tgg_file['artist_name'].tolist()
+    track_name_list = tgg_file['track_name'].tolist()
+    lyrics_corpus = tgg_file['lyrics'].tolist()
+    genre_list = tgg_file['genre'].tolist()
+    lyrics_corpus_embeddings = np.array(tgg_file['embedding'].tolist(), dtype=float)
+    top_k = min(3, len(lyrics_corpus))
     print("done converting to np array")
     return collections.namedtuple('Engine', 
-    ['page_text_corpus', 
-    'page_text_corpus_embeddings', 
-    'page_numbers_list',
-    'chapter_number_list',
+    ['lyrics_corpus', 
+    'lyrics_corpus_embeddings', 
+    'artist_name_list',
+    'track_name_list',
+    'genre_list',
     'top_k'])(
-        page_text_corpus, 
-        page_text_corpus_embeddings, 
-        page_numbers_list,
-        chapter_number_list,
+        lyrics_corpus, 
+        lyrics_corpus_embeddings, 
+        artist_name_list,
+        track_name_list,
+        genre_list,
         top_k)
 
 def get_query_embedding_openai(prompt):
@@ -70,13 +73,14 @@ def prepare_contexts(dataset):
     and each value is the corresponding embedding.
     """
     contexts = {}
-    for page_text, page_number, chapter_number, embedding in zip(
-        dataset.page_text_corpus, 
-        dataset.page_numbers_list, 
-        dataset.chapter_number_list, 
-        dataset.page_text_corpus_embeddings
+    for lyrics, artist_name, track_name, genre, embedding in zip(
+        dataset.lyrics_corpus, 
+        dataset.artist_name_list, 
+        dataset.track_name_list,
+        dataset.genre_list,
+        dataset.lyrics_corpus_embeddings
     ):
-        contexts[(page_text, page_number, chapter_number)] = embedding
+        contexts[(lyrics, artist_name, track_name, genre)] = embedding
     return contexts
 
 def vector_similarity(x: list[float], y: list[float]) -> float:
@@ -111,9 +115,9 @@ def get_semantic_suggestions(prompt):
     Returns:
     - A list of dictionaries containing the top-k most relevant document sections to the query.
         Each dictionary has the following keys:
-            * page: a string representing the text of the document section.
-            * chapter_number: a string representing the chapter number of the document section.
-            * page_number: an integer representing the page number of the document section.
+            * lyrics: a string representing the lyrics of a track
+            * track: a string representing the name of the track.
+            * artist: a string representing the artist name for each track.
 
     Example:
     >>> suggestions = get_semantic_suggestions("What is the meaning of life?")
@@ -126,12 +130,13 @@ def get_semantic_suggestions(prompt):
     )
     top_three = relevant_sections[:dataset_with_embeddings.top_k]
     final = []
-    for _, (page_text, page_number, chapter_number) in top_three:
+    for _, (lyrics, artist_name, track_name, genre) in top_three:
         final.append(
             {
-                'page': page_text,
-                'chapter_number': chapter_number,
-                'page_number': page_number
+                'lyrics': lyrics,
+                'artist': artist_name,
+                'track': track_name,
+                'genre': genre
             })
     return final 
 
@@ -142,5 +147,5 @@ if __name__ == '__main__':
     results = get_semantic_suggestions(prompt)
     for result in results:
         print("-"*80)
-        print(f"Chapter: {result['chapter_number']}, Page: {result['page_number']}")
-        print(result['page'])
+        print(f"Track Name: {result['track']}, Artist: {result['artist']}, Genre: {result['genre']}")
+        print(result['lyrics'])

@@ -3,6 +3,7 @@ import openai
 import os
 import tqdm
 from time import sleep
+import pandas as pd
 
 # Set up OpenAI API key
 openai.api_key = "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"
@@ -25,6 +26,7 @@ genre_count = {
     "hip hop": 0
 }
 
+temp_list = []
 for i, track in enumerate(tracks):
     # Generate embeddings
 
@@ -45,8 +47,12 @@ for i, track in enumerate(tracks):
 
         # add the embeddings to the tracks array
         tracks[i]['embedding'] = embedding
+        temp_list.append(tracks[i])
     else:
         continue
 
 with open('tracks_with_embeddings.json', 'w') as f:
-    json.dump(tracks, f)
+    json.dump(temp_list, f)
+
+data = pd.read_json("tracks_with_embeddings.json")
+data.to_parquet("tracks.parquet") 
