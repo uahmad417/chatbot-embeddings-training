@@ -23,6 +23,8 @@ def parse_to_json(file_path):
     json_data = json.loads(csv_data.to_json(orient="records"))
 
     with open("tracks.json", 'w') as json_file:
+        
+        # write the data to file
         json.dump(json_data, json_file)
 
 
