@@ -12,7 +12,7 @@ global FILE_NAME
 FILE_NAME = 'tracks.parquet'
 EMBEDDINGS_MODEL = "text-embedding-ada-002"
 CHAT_COMPLETIONS_MODEL = "gpt-3.5-turbo-0301"
-openai.api_key = "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"
+openai.api_key = "INSERT_API_KEY_HERE"
 
 
 def parse_dataset():
@@ -146,23 +146,24 @@ def get_semantic_suggestions(prompt):
 # experimental version of the prompt construction function
 def construct_completions_prompt_exp(question):
     """
-    Construct a prompt for OpenAI's chatbot model that simulates a book research assistance scenario.
+    Construct a prompt for OpenAI's chatbot model that simulates a song recommendation and identification scenario.
 
     Args:
-    - question: a string representing the student's question to the research assistant.
+    - question: a string representing the users question to the app.
 
     Returns:
     - A dictionary containing the user's prompt and the system's response.
         The dictionary has the following keys:
-            * 'user': a string representing the student's question.
-            * 'system': a string representing the research assistant's response, including the available context.
+            * 'user': a string representing the users question.
+            * 'system': a string representing the apps response, including the available context.
     """
     system_prompt = """
-        You are assisting a student's book research for a paper. 
-        The student will ask you questions about the book. You will answer the student's questions while referencing the book.
-        The book references have been pre-processed and are available to you in the context section below.
-        Do not refer to your prior knowledge on the subject. Only answer the student's questions with the excerpts in the context section below.
-        The student requires citations so you must include the chapter and page number for each reference.
+        You are assisting a user in identifying and recommnding him songs. 
+        The user will ask for your help in identifying lyrics of a song and recommending songs based on artist and genre.
+        You will respond the users queries while referencing the songs.
+        The songs and track data have been pre-processed and are available to you in the context section below.
+        Do not refer to your prior knowledge on the subject. Only answer the users questions with the excerpts in the context section below.
+        The user requires reference so you must include the artist name, track name and genre.
         
         Context:
         *insert text*
@@ -172,11 +173,11 @@ def construct_completions_prompt_exp(question):
     """
     edited_user_prompt = user_prompt.replace("*insert question*", question)
     # on the next line write code similar to the previous line but for the "insert text" part
-    page_results = get_semantic_suggestions(question)
-    page_composite_string = ""
-    for page_result in page_results:
-        page_composite_string += f"'{page_result['page'].strip()}', (Chapter {page_result['chapter_number']}, Page {page_result['page_number']})\n"
-    edited_system_prompt = system_prompt.replace("*insert text*", page_composite_string)
+    track_results = get_semantic_suggestions(question)
+    track_composite_string = ""
+    for track_result in track_results:
+        track_composite_string += f"'{track_result['lyrics'].strip()}', (Track {track_result['track']}, Artist {track_result['artist']}, Genre {track_result['genre']})\n"
+    edited_system_prompt = system_prompt.replace("*insert text*", track_composite_string)
     return {"user": edited_user_prompt, "system": edited_system_prompt}
 
 # experimental version of the answer function

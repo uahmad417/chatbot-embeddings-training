@@ -6,7 +6,7 @@ from time import sleep
 import pandas as pd
 
 # Set up OpenAI API key
-openai.api_key = "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"
+openai.api_key = "INSERT_API_KEY_HERE"
 
 # Define model and parameters
 model_engine = "text-embedding-ada-002"
@@ -25,6 +25,7 @@ genre_count = {
     "rock": 0,
     "hip hop": 0
 }
+request_counter = 0
 
 temp_list = []
 for i, track in enumerate(tracks):
@@ -33,14 +34,19 @@ for i, track in enumerate(tracks):
     # upper limit of each genre is 8
     # so from all tracks retrieve 8 tracks from each genre
     # this is done to stay within the rate limit of openai api
-    if genre_count[track["genre"]] < 8:
-
+    
+    if genre_count[track["genre"]] < 50:
+        
+        request_counter +=1
+        if request_counter == 60:
+            request_counter = 0
+            sleep(60)
         # increase current count of the genre
         genre_count[track["genre"]] += 1
 
         response = openai.Embedding.create(
             model=model_engine,
-            input=track['lyrics']
+            input=json.dumps(track)
         )
         # Extract embeddings from response
         embedding = response["data"][0]["embedding"]

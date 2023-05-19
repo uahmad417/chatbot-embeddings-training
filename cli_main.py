@@ -11,7 +11,7 @@ import sys
 global FILE_NAME
 FILE_NAME = 'tracks.parquet'
 EMBEDDINGS_MODEL = "text-embedding-ada-002"
-openai.api_key = "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"
+openai.api_key = "INSERT_API_KEY_HERE"
 
 
 def parse_dataset():
@@ -69,7 +69,7 @@ def prepare_contexts(dataset):
     - dataset: contains preprocessed text data and their embeddings.
 
     Returns:
-    - A dictionary where each key is a tuple representing a document section consisting of (page_text, page_number, chapter_number), 
+    - A dictionary where each key is a tuple representing a document section consisting of (lyrics, artist_name, track_name, genre), 
     and each value is the corresponding embedding.
     """
     contexts = {}
